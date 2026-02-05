@@ -27,6 +27,7 @@ interface Task {
   content: string;
   business?: string;
   eta?: string;
+  priority?: 'high' | 'medium' | 'low';
 }
 
 interface KanbanData {
@@ -49,25 +50,36 @@ function SortableCard({ task }: { task: Task }) {
     opacity: isDragging ? 0.5 : 1,
   };
 
+  const priorityColors = {
+    high: 'bg-red-500',
+    medium: 'bg-yellow-500',
+    low: 'bg-green-500',
+  };
+
   return (
     <div
       ref={setNodeRef}
       style={style}
       {...attributes}
       {...listeners}
-      className="rounded-lg border border-slate-200 bg-white p-3 shadow-sm hover:shadow-md transition cursor-grab active:cursor-grabbing dark:border-slate-800 dark:bg-slate-900"
+      className="group relative rounded-xl bg-zinc-900 border border-zinc-800 p-4 shadow-lg hover:shadow-xl hover:border-zinc-700 transition-all cursor-grab active:cursor-grabbing"
     >
-      <div className="font-medium text-sm">{task.content}</div>
-      {task.business && (
-        <div className="mt-2 text-xs text-slate-500 dark:text-slate-400">
-          {task.business}
-        </div>
+      {task.priority && (
+        <div className={`absolute top-3 right-3 w-2 h-2 rounded-full ${priorityColors[task.priority]}`} />
       )}
-      {task.eta && (
-        <div className="mt-1 text-xs text-slate-400 dark:text-slate-500">
-          ETA: {task.eta}
-        </div>
-      )}
+      <div className="font-medium text-white mb-2">{task.content}</div>
+      <div className="flex items-center gap-3 mt-3">
+        {task.business && (
+          <span className="px-2.5 py-1 bg-zinc-800 text-zinc-300 text-xs rounded-full">
+            {task.business}
+          </span>
+        )}
+        {task.eta && (
+          <span className="text-xs text-zinc-500">
+            ⏱ {task.eta}
+          </span>
+        )}
+      </div>
     </div>
   );
 }
@@ -75,22 +87,27 @@ function SortableCard({ task }: { task: Task }) {
 function Column({ 
   id, 
   title, 
-  tasks 
+  tasks,
+  color 
 }: { 
   id: string; 
   title: string; 
   tasks: Task[];
+  color: string;
 }) {
   return (
-    <section className="w-[320px] shrink-0">
-      <div className="mb-3 flex items-center justify-between">
-        <h2 className="text-base font-bold">{title}</h2>
-        <span className="rounded-full bg-slate-100 px-2.5 py-1 text-xs font-medium text-slate-700 dark:bg-slate-800 dark:text-slate-300">
+    <section className="w-[340px] shrink-0">
+      <div className="mb-4 flex items-center justify-between">
+        <div className="flex items-center gap-3">
+          <div className={`w-1 h-8 rounded-full ${color}`} />
+          <h2 className="text-lg font-bold text-white">{title}</h2>
+        </div>
+        <span className="rounded-full bg-zinc-800 px-3 py-1.5 text-sm font-semibold text-zinc-300">
           {tasks.length}
         </span>
       </div>
       <SortableContext items={tasks.map(t => t.id)} strategy={verticalListSortingStrategy}>
-        <div className="space-y-3 rounded-2xl border-2 border-slate-200 bg-slate-50/50 p-4 min-h-[400px] dark:border-slate-800 dark:bg-slate-900/30">
+        <div className="space-y-3 rounded-2xl bg-zinc-950/50 border border-zinc-800/50 p-4 min-h-[500px] backdrop-blur">
           {tasks.map((task) => (
             <SortableCard key={task.id} task={task} />
           ))}
@@ -103,21 +120,25 @@ function Column({
 export default function Home() {
   const [data, setData] = useState<KanbanData>({
     'Backlog': [
-      { id: '1', content: 'Connect Gmail integration', business: 'All businesses' },
-      { id: '2', content: 'Review Notion setup', business: 'MyTruckManager' },
+      { id: '1', content: 'Gmail Integration Setup', business: 'All', priority: 'high' },
+      { id: '2', content: 'Review Notion Database', business: 'MyTruckManager', priority: 'medium' },
     ],
     'In Progress': [
-      { id: '3', content: 'Build Kanban board', business: 'Internal', eta: 'Today' },
+      { id: '3', content: 'Kanban Board Development', business: 'Internal', eta: 'Today', priority: 'high' },
     ],
     'Leads': [
-      { id: '4', content: 'Follow up with prospect', business: 'Ytruck.app' },
+      { id: '4', content: 'Follow up: Fleet Manager', business: 'Ytruck', priority: 'medium' },
+      { id: '5', content: 'Demo Request: 615data', business: '615data', priority: 'high' },
     ],
     'Done': [
-      { id: '5', content: 'Telegram integration', business: 'All businesses' },
+      { id: '6', content: 'Telegram Bot Connected', business: 'All' },
     ],
   });
 
   const [activeId, setActiveId] = useState<string | null>(null);
+  const [showAddTask, setShowAddTask] = useState(false);
+  const [newTaskContent, setNewTaskContent] = useState('');
+  const [selectedColumn, setSelectedColumn] = useState('Backlog');
 
   const sensors = useSensors(
     useSensor(PointerSensor),
@@ -126,7 +147,6 @@ export default function Home() {
     })
   );
 
-  // Load from localStorage
   useEffect(() => {
     const saved = localStorage.getItem('kanban-data');
     if (saved) {
@@ -134,7 +154,6 @@ export default function Home() {
     }
   }, []);
 
-  // Save to localStorage
   useEffect(() => {
     localStorage.setItem('kanban-data', JSON.stringify(data));
   }, [data]);
@@ -215,22 +234,105 @@ export default function Home() {
     setActiveId(null);
   };
 
+  const handleAddTask = () => {
+    if (!newTaskContent.trim()) return;
+    
+    const newTask: Task = {
+      id: Date.now().toString(),
+      content: newTaskContent,
+      priority: 'medium',
+    };
+
+    setData((prev) => ({
+      ...prev,
+      [selectedColumn]: [...prev[selectedColumn], newTask],
+    }));
+
+    setNewTaskContent('');
+    setShowAddTask(false);
+  };
+
   const activeTask = activeId
     ? Object.values(data).flat().find((task) => task.id === activeId)
     : null;
 
-  return (
-    <div className="min-h-screen bg-gradient-to-br from-slate-50 to-slate-100 dark:from-slate-950 dark:to-slate-900">
-      <div className="container mx-auto px-4 py-8">
-        <div className="mb-8">
-          <h1 className="text-3xl font-bold text-slate-900 dark:text-slate-100">
-            Alyssa's Workspace
-          </h1>
-          <p className="mt-2 text-slate-600 dark:text-slate-400">
-            MyTruckManager • 615data • Ytruck.app
-          </p>
-        </div>
+  const columnColors = {
+    'Backlog': 'bg-blue-500',
+    'In Progress': 'bg-yellow-500',
+    'Leads': 'bg-purple-500',
+    'Done': 'bg-green-500',
+  };
 
+  return (
+    <div className="min-h-screen bg-black">
+      <div className="border-b border-zinc-800 bg-zinc-950">
+        <div className="container mx-auto px-6 py-6">
+          <div className="flex items-center justify-between">
+            <div>
+              <h1 className="text-3xl font-bold text-white mb-2">
+                Alyssa Command Center
+              </h1>
+              <div className="flex gap-3">
+                <span className="px-3 py-1 bg-zinc-900 text-zinc-400 text-sm rounded-full border border-zinc-800">
+                  MyTruckManager
+                </span>
+                <span className="px-3 py-1 bg-zinc-900 text-zinc-400 text-sm rounded-full border border-zinc-800">
+                  615data
+                </span>
+                <span className="px-3 py-1 bg-zinc-900 text-zinc-400 text-sm rounded-full border border-zinc-800">
+                  Ytruck.app
+                </span>
+              </div>
+            </div>
+            <button
+              onClick={() => setShowAddTask(!showAddTask)}
+              className="px-6 py-3 bg-white text-black font-semibold rounded-xl hover:bg-zinc-200 transition"
+            >
+              + Add Task
+            </button>
+          </div>
+        </div>
+      </div>
+
+      {showAddTask && (
+        <div className="fixed inset-0 bg-black/80 backdrop-blur flex items-center justify-center z-50">
+          <div className="bg-zinc-900 border border-zinc-800 rounded-2xl p-6 w-[500px]">
+            <h3 className="text-xl font-bold text-white mb-4">Create New Task</h3>
+            <input
+              type="text"
+              value={newTaskContent}
+              onChange={(e) => setNewTaskContent(e.target.value)}
+              placeholder="Task description..."
+              className="w-full px-4 py-3 bg-zinc-950 border border-zinc-800 rounded-xl text-white placeholder-zinc-600 focus:outline-none focus:border-zinc-700 mb-4"
+            />
+            <select
+              value={selectedColumn}
+              onChange={(e) => setSelectedColumn(e.target.value)}
+              className="w-full px-4 py-3 bg-zinc-950 border border-zinc-800 rounded-xl text-white focus:outline-none focus:border-zinc-700 mb-4"
+            >
+              {Object.keys(data).map((col) => (
+                <option key={col} value={col}>{col}</option>
+              ))}
+            </select>
+            <div className="flex gap-3">
+              <button
+                onClick={handleAddTask}
+                className="flex-1 px-4 py-3 bg-white text-black font-semibold rounded-xl hover:bg-zinc-200 transition"
+              >
+                Create
+              </button>
+              <button
+                onClick={() => setShowAddTask(false)}
+                className="flex-1 px-4 py-3 bg-zinc-800 text-white font-semibold rounded-xl hover:bg-zinc-700 transition"
+              >
+                Cancel
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      <div className="container mx-auto px-6 py-8">
         <DndContext
           sensors={sensors}
           collisionDetection={closestCorners}
@@ -246,6 +348,7 @@ export default function Home() {
                   id={columnId}
                   title={columnId}
                   tasks={data[columnId]}
+                  color={columnColors[columnId as keyof typeof columnColors]}
                 />
               ))}
             </div>
@@ -253,8 +356,8 @@ export default function Home() {
 
           <DragOverlay>
             {activeTask ? (
-              <div className="rounded-lg border border-slate-200 bg-white p-3 shadow-lg rotate-3 dark:border-slate-800 dark:bg-slate-900">
-                <div className="font-medium text-sm">{activeTask.content}</div>
+              <div className="rounded-xl bg-zinc-900 border border-zinc-700 p-4 shadow-2xl rotate-6">
+                <div className="font-medium text-white">{activeTask.content}</div>
               </div>
             ) : null}
           </DragOverlay>
