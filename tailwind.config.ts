@@ -10,15 +10,23 @@ export default {
   theme: {
     extend: {
       colors: {
-        ytruck: {
-          red: '#FF3B30',
-          coral: '#FF6B5A',
-          orange: '#FF9500',
-          dark: '#0A0A0A',
-          darker: '#050505',
-          gray: '#1C1C1E',
-          'gray-light': '#2C2C2E',
+        bg: {
+          primary: '#0B0F14',
+          surface: '#121826',
+          elevated: '#161D2F',
         },
+        accent: {
+          primary: '#4F8CFF',
+          success: '#22C55E',
+          warning: '#F59E0B',
+        },
+        text: {
+          primary: '#E5E7EB',
+          secondary: '#9CA3AF',
+        },
+      },
+      fontFamily: {
+        sans: ['Inter', 'SF Pro Display', '-apple-system', 'BlinkMacSystemFont', 'system-ui', 'sans-serif'],
       },
     },
   },

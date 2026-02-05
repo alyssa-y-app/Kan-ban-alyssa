@@ -1,444 +1,303 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import {
-  DndContext,
-  DragOverlay,
-  closestCorners,
-  KeyboardSensor,
-  PointerSensor,
-  useSensor,
-  useSensors,
-  DragStartEvent,
-  DragOverEvent,
-  DragEndEvent,
-} from '@dnd-kit/core';
-import {
-  arrayMove,
-  SortableContext,
-  sortableKeyboardCoordinates,
-  verticalListSortingStrategy,
-} from '@dnd-kit/sortable';
-import { useSortable } from '@dnd-kit/sortable';
-import { CSS } from '@dnd-kit/utilities';
-import { 
-  Plus, 
-  Clock, 
-  CheckCircle2, 
-  Truck, 
-  Database, 
-  Users,
-  X,
-  Grid3x3,
-  LayoutGrid,
-  AlertCircle,
-  Zap
-} from 'lucide-react';
+import { Plus, ChevronDown, ChevronRight } from 'lucide-react';
 
 interface Task {
   id: string;
   content: string;
-  business?: string;
+  business: string;
+  status: 'backlog' | 'in-progress' | 'done';
   eta?: string;
-  priority?: 'high' | 'medium' | 'low';
-}
-
-interface KanbanData {
-  [key: string]: Task[];
-}
-
-function SortableCard({ task, onDelete }: { task: Task; onDelete: (id: string) => void }) {
-  const {
-    attributes,
-    listeners,
-    setNodeRef,
-    transform,
-    transition,
-    isDragging,
-  } = useSortable({ id: task.id });
-
-  const style = {
-    transform: CSS.Transform.toString(transform),
-    transition,
-    opacity: isDragging ? 0.5 : 1,
-  };
-
-  const priorityConfig = {
-    high: { color: 'bg-ytruck-red', icon: AlertCircle },
-    medium: { color: 'bg-ytruck-orange', icon: Clock },
-    low: { color: 'bg-green-500', icon: CheckCircle2 },
-  };
-
-  const businessIcons = {
-    'MyTruckManager': Truck,
-    '615data': Database,
-    'Ytruck': Zap,
-  };
-
-  const config = task.priority ? priorityConfig[task.priority] : null;
-  const BusinessIcon = task.business ? businessIcons[task.business as keyof typeof businessIcons] : null;
-  const PriorityIcon = config?.icon;
-
-  return (
-    <div
-      ref={setNodeRef}
-      style={style}
-      {...attributes}
-      {...listeners}
-      className="group relative rounded-xl bg-ytruck-gray border border-ytruck-gray-light p-4 shadow-lg hover:shadow-xl hover:border-ytruck-coral/50 transition-all cursor-grab active:cursor-grabbing"
-    >
-      <div className="flex items-start justify-between gap-3 mb-3">
-        <div className="flex-1">
-          <p className="font-medium text-white leading-snug">{task.content}</p>
-        </div>
-        <button
-          onClick={(e) => {
-            e.stopPropagation();
-            onDelete(task.id);
-          }}
-          className="opacity-0 group-hover:opacity-100 transition-opacity p-1 hover:bg-ytruck-red/20 rounded-lg"
-        >
-          <X className="w-4 h-4 text-ytruck-red" />
-        </button>
-      </div>
-
-      <div className="flex items-center gap-2 flex-wrap">
-        {task.business && BusinessIcon && (
-          <div className="flex items-center gap-1.5 px-2.5 py-1 bg-ytruck-dark rounded-lg">
-            <BusinessIcon className="w-3.5 h-3.5 text-ytruck-coral" />
-            <span className="text-xs font-medium text-gray-300">{task.business}</span>
-          </div>
-        )}
-        {task.eta && (
-          <div className="flex items-center gap-1.5 px-2.5 py-1 bg-ytruck-orange/20 rounded-lg">
-            <Clock className="w-3.5 h-3.5 text-ytruck-orange" />
-            <span className="text-xs font-medium text-ytruck-orange">{task.eta}</span>
-          </div>
-        )}
-        {config && PriorityIcon && (
-          <div className="flex items-center gap-1 px-2.5 py-1 bg-ytruck-dark rounded-lg">
-            <PriorityIcon className="w-3.5 h-3.5 text-white" />
-            <div className={`w-2 h-2 rounded-full ${config.color}`} />
-          </div>
-        )}
-      </div>
-    </div>
-  );
-}
-
-function Column({ 
-  id, 
-  title, 
-  tasks,
-  icon: Icon,
-  color,
-  onDeleteTask
-}: { 
-  id: string; 
-  title: string; 
-  tasks: Task[];
-  icon: any;
-  color: string;
-  onDeleteTask: (id: string) => void;
-}) {
-  return (
-    <section className="w-full lg:w-[340px] shrink-0">
-      <div className="mb-4">
-        <div className="inline-flex items-center gap-3 px-4 py-2.5 bg-ytruck-gray rounded-xl border border-ytruck-gray-light">
-          <div className={`p-1.5 rounded-lg ${color}`}>
-            <Icon className="w-4 h-4 text-white" />
-          </div>
-          <h2 className="text-base font-bold text-white">{title}</h2>
-          <span className="ml-auto px-2.5 py-0.5 bg-ytruck-dark rounded-full text-sm font-bold text-ytruck-coral">
-            {tasks.length}
-          </span>
-        </div>
-      </div>
-      <SortableContext items={tasks.map(t => t.id)} strategy={verticalListSortingStrategy}>
-        <div className="space-y-3 rounded-xl bg-ytruck-darker/50 border border-ytruck-gray p-4 min-h-[300px] lg:min-h-[500px]">
-          {tasks.map((task) => (
-            <SortableCard key={task.id} task={task} onDelete={onDeleteTask} />
-          ))}
-        </div>
-      </SortableContext>
-    </section>
-  );
 }
 
 export default function Home() {
-  const [data, setData] = useState<KanbanData>({
-    'Backlog': [
-      { id: '1', content: 'Gmail Integration Setup', business: 'MyTruckManager', priority: 'high' },
-      { id: '2', content: 'Review Notion Database', business: '615data', priority: 'medium' },
-    ],
-    'In Progress': [
-      { id: '3', content: 'Kanban Board Development', business: 'Ytruck', eta: 'Today', priority: 'high' },
-    ],
-    'Leads': [
-      { id: '4', content: 'Follow up: Fleet Manager', business: 'Ytruck', priority: 'medium' },
-      { id: '5', content: 'Demo Request from Texas', business: '615data', priority: 'high' },
-    ],
-    'Done': [
-      { id: '6', content: 'Telegram Bot Connected', business: 'MyTruckManager' },
-    ],
+  const [tasks, setTasks] = useState<Task[]>([
+    { id: '1', content: 'Gmail Integration Setup', business: 'MyTruckManager', status: 'in-progress', eta: 'Today' },
+    { id: '2', content: 'Review Notion Database', business: '615Data', status: 'backlog' },
+    { id: '3', content: 'Follow up: Fleet Manager', business: 'YTruck', status: 'in-progress' },
+    { id: '4', content: 'Demo Request from Texas', business: '615Data', status: 'backlog' },
+    { id: '5', content: 'Telegram Bot Connected', business: 'MyTruckManager', status: 'done' },
+  ]);
+
+  const [selectedBusiness, setSelectedBusiness] = useState<string | null>(null);
+  const [expandedSections, setExpandedSections] = useState({
+    backlog: true,
+    'in-progress': true,
+    done: false,
   });
-
-  const [activeId, setActiveId] = useState<string | null>(null);
   const [showAddTask, setShowAddTask] = useState(false);
-  const [newTaskContent, setNewTaskContent] = useState('');
-  const [selectedColumn, setSelectedColumn] = useState('Backlog');
-  const [selectedBusiness, setSelectedBusiness] = useState('MyTruckManager');
-  const [viewMode, setViewMode] = useState<'grid' | 'list'>('grid');
-
-  const sensors = useSensors(
-    useSensor(PointerSensor),
-    useSensor(KeyboardSensor, {
-      coordinateGetter: sortableKeyboardCoordinates,
-    })
-  );
+  const [newTask, setNewTask] = useState({ content: '', business: 'MyTruckManager' });
+  const [selectedTask, setSelectedTask] = useState<Task | null>(null);
 
   useEffect(() => {
-    const saved = localStorage.getItem('kanban-data');
+    const saved = localStorage.getItem('command-tasks');
     if (saved) {
-      setData(JSON.parse(saved));
+      setTasks(JSON.parse(saved));
     }
   }, []);
 
   useEffect(() => {
-    localStorage.setItem('kanban-data', JSON.stringify(data));
-  }, [data]);
+    localStorage.setItem('command-tasks', JSON.stringify(tasks));
+  }, [tasks]);
 
-  const findContainer = (id: string) => {
-    if (id in data) return id;
-    return Object.keys(data).find((key) =>
-      data[key].some((item) => item.id === id)
-    );
+  const businesses = ['MyTruckManager', '615Data', 'YTruck'];
+
+  const filteredTasks = selectedBusiness
+    ? tasks.filter((t) => t.business === selectedBusiness)
+    : tasks;
+
+  const tasksByStatus = {
+    backlog: filteredTasks.filter((t) => t.status === 'backlog'),
+    'in-progress': filteredTasks.filter((t) => t.status === 'in-progress'),
+    done: filteredTasks.filter((t) => t.status === 'done'),
   };
 
-  const handleDragStart = (event: DragStartEvent) => {
-    setActiveId(event.active.id as string);
+  const toggleSection = (section: keyof typeof expandedSections) => {
+    setExpandedSections((prev) => ({ ...prev, [section]: !prev[section] }));
   };
 
-  const handleDragOver = (event: DragOverEvent) => {
-    const { active, over } = event;
-    if (!over) return;
-
-    const activeContainer = findContainer(active.id as string);
-    const overContainer = findContainer(over.id as string) || (over.id as string);
-
-    if (!activeContainer || !overContainer || activeContainer === overContainer) return;
-
-    setData((prev) => {
-      const activeItems = prev[activeContainer];
-      const overItems = prev[overContainer];
-      const activeIndex = activeItems.findIndex((i) => i.id === active.id);
-      const overIndex = overItems.findIndex((i) => i.id === over.id);
-
-      let newIndex: number;
-      if (over.id in prev) {
-        newIndex = overItems.length;
-      } else {
-        newIndex = overIndex >= 0 ? overIndex : overItems.length;
-      }
-
-      return {
-        ...prev,
-        [activeContainer]: activeItems.filter((item) => item.id !== active.id),
-        [overContainer]: [
-          ...overItems.slice(0, newIndex),
-          activeItems[activeIndex],
-          ...overItems.slice(newIndex),
-        ],
-      };
-    });
-  };
-
-  const handleDragEnd = (event: DragEndEvent) => {
-    const { active, over } = event;
-    if (!over) return;
-
-    const activeContainer = findContainer(active.id as string);
-    const overContainer = findContainer(over.id as string);
-
-    if (!activeContainer || !overContainer) return;
-
-    if (activeContainer === overContainer) {
-      const activeIndex = data[activeContainer].findIndex((i) => i.id === active.id);
-      const overIndex = data[overContainer].findIndex((i) => i.id === over.id);
-
-      if (activeIndex !== overIndex) {
-        setData((prev) => ({
-          ...prev,
-          [overContainer]: arrayMove(prev[overContainer], activeIndex, overIndex),
-        }));
-      }
-    }
-
-    setActiveId(null);
-  };
-
-  const handleAddTask = () => {
-    if (!newTaskContent.trim()) return;
-    
-    const newTask: Task = {
+  const addTask = () => {
+    if (!newTask.content.trim()) return;
+    const task: Task = {
       id: Date.now().toString(),
-      content: newTaskContent,
-      business: selectedBusiness,
-      priority: 'medium',
+      content: newTask.content,
+      business: newTask.business,
+      status: 'backlog',
     };
-
-    setData((prev) => ({
-      ...prev,
-      [selectedColumn]: [...prev[selectedColumn], newTask],
-    }));
-
-    setNewTaskContent('');
+    setTasks((prev) => [...prev, task]);
+    setNewTask({ content: '', business: 'MyTruckManager' });
     setShowAddTask(false);
   };
 
-  const handleDeleteTask = (taskId: string) => {
-    setData((prev) => {
-      const newData = { ...prev };
-      Object.keys(newData).forEach((col) => {
-        newData[col] = newData[col].filter((task) => task.id !== taskId);
-      });
-      return newData;
-    });
+  const updateTaskStatus = (taskId: string, status: Task['status']) => {
+    setTasks((prev) => prev.map((t) => (t.id === taskId ? { ...t, status } : t)));
+    setSelectedTask(null);
   };
 
-  const activeTask = activeId
-    ? Object.values(data).flat().find((task) => task.id === activeId)
-    : null;
+  const deleteTask = (taskId: string) => {
+    setTasks((prev) => prev.filter((t) => t.id !== taskId));
+    setSelectedTask(null);
+  };
 
-  const columnConfig = {
-    'Backlog': { icon: Grid3x3, color: 'bg-ytruck-coral' },
-    'In Progress': { icon: Clock, color: 'bg-ytruck-orange' },
-    'Leads': { icon: Users, color: 'bg-ytruck-red' },
-    'Done': { icon: CheckCircle2, color: 'bg-green-500' },
+  const statusConfig = {
+    backlog: { label: 'Backlog', color: 'bg-text-secondary', textColor: 'text-text-secondary' },
+    'in-progress': { label: 'In Progress', color: 'bg-accent-primary', textColor: 'text-accent-primary' },
+    done: { label: 'Done', color: 'bg-accent-success', textColor: 'text-accent-success' },
   };
 
   return (
-    <div className="min-h-screen bg-ytruck-darker">
-      <div className="border-b border-ytruck-gray bg-ytruck-dark">
-        <div className="container mx-auto px-4 lg:px-6 py-4 lg:py-6">
-          <div className="flex flex-col lg:flex-row items-start lg:items-center justify-between gap-4">
+    <div className="min-h-screen bg-bg-primary text-text-primary">
+      {/* Sticky Header */}
+      <header className="sticky top-0 z-40 bg-bg-surface/95 backdrop-blur border-b border-white/[0.06]">
+        <div className="px-4 py-4">
+          <div className="flex items-center justify-between">
             <div>
-              <h1 className="text-2xl lg:text-3xl font-bold text-white mb-3">
-                Command Center
-              </h1>
-              <div className="flex flex-wrap gap-2">
-                <span className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-ytruck-gray text-gray-300 text-xs rounded-lg border border-ytruck-gray-light">
-                  <Truck className="w-3 h-3 text-ytruck-coral" />
-                  MyTruckManager
-                </span>
-                <span className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-ytruck-gray text-gray-300 text-xs rounded-lg border border-ytruck-gray-light">
-                  <Database className="w-3 h-3 text-ytruck-coral" />
-                  615data
-                </span>
-                <span className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-ytruck-gray text-gray-300 text-xs rounded-lg border border-ytruck-gray-light">
-                  <Zap className="w-3 h-3 text-ytruck-coral" />
-                  Ytruck.app
-                </span>
-              </div>
+              <h1 className="text-xl font-semibold">Alyssa Command Center</h1>
+              <p className="text-sm text-text-secondary">AI Operations Overview</p>
             </div>
-            <div className="flex gap-2 w-full lg:w-auto">
-              <button
-                onClick={() => setViewMode(viewMode === 'grid' ? 'list' : 'grid')}
-                className="flex-1 lg:flex-none px-4 py-2.5 bg-ytruck-gray text-gray-300 font-semibold rounded-xl hover:bg-ytruck-gray-light transition border border-ytruck-gray-light flex items-center justify-center gap-2"
-              >
-                {viewMode === 'grid' ? <LayoutGrid className="w-4 h-4" /> : <Grid3x3 className="w-4 h-4" />}
-              </button>
-              <button
-                onClick={() => setShowAddTask(!showAddTask)}
-                className="flex-1 lg:flex-none px-4 py-2.5 bg-ytruck-red hover:bg-ytruck-coral text-white font-bold rounded-xl transition shadow-lg flex items-center justify-center gap-2"
-              >
-                <Plus className="w-5 h-5" />
-                Add Task
-              </button>
-            </div>
+            <button
+              onClick={() => setShowAddTask(true)}
+              className="p-2.5 bg-accent-primary rounded-xl hover:bg-accent-primary/90 transition min-w-[44px] min-h-[44px] flex items-center justify-center"
+            >
+              <Plus className="w-5 h-5" />
+            </button>
           </div>
         </div>
-      </div>
 
+        {/* Business Filter */}
+        <div className="px-4 pb-3 overflow-x-auto hide-scrollbar">
+          <div className="flex gap-2 min-w-max">
+            <button
+              onClick={() => setSelectedBusiness(null)}
+              className={`px-4 py-2 rounded-full text-sm font-medium transition whitespace-nowrap ${
+                selectedBusiness === null
+                  ? 'bg-accent-primary text-white'
+                  : 'bg-bg-elevated text-text-secondary hover:text-text-primary'
+              }`}
+            >
+              All
+            </button>
+            {businesses.map((business) => (
+              <button
+                key={business}
+                onClick={() => setSelectedBusiness(business)}
+                className={`px-4 py-2 rounded-full text-sm font-medium transition whitespace-nowrap ${
+                  selectedBusiness === business
+                    ? 'bg-accent-primary text-white'
+                    : 'bg-bg-elevated text-text-secondary hover:text-text-primary'
+                }`}
+              >
+                {business}
+              </button>
+            ))}
+          </div>
+        </div>
+      </header>
+
+      {/* Main Content */}
+      <main className="px-4 py-6 space-y-6 pb-24">
+        {(['backlog', 'in-progress', 'done'] as const).map((status) => {
+          const config = statusConfig[status];
+          const sectionTasks = tasksByStatus[status];
+          const isExpanded = expandedSections[status];
+
+          return (
+            <section key={status}>
+              <button
+                onClick={() => toggleSection(status)}
+                className="w-full flex items-center justify-between mb-3 min-h-[44px]"
+              >
+                <div className="flex items-center gap-2">
+                  {isExpanded ? (
+                    <ChevronDown className="w-5 h-5 text-text-secondary" />
+                  ) : (
+                    <ChevronRight className="w-5 h-5 text-text-secondary" />
+                  )}
+                  <h2 className="text-lg font-semibold">{config.label}</h2>
+                  <span className="px-2.5 py-0.5 bg-bg-elevated rounded-full text-sm font-medium text-text-secondary">
+                    {sectionTasks.length}
+                  </span>
+                </div>
+              </button>
+
+              {isExpanded && (
+                <div className="space-y-2">
+                  {sectionTasks.length === 0 ? (
+                    <div className="p-6 text-center text-text-secondary text-sm">
+                      No tasks
+                    </div>
+                  ) : (
+                    sectionTasks.map((task) => (
+                      <button
+                        key={task.id}
+                        onClick={() => setSelectedTask(task)}
+                        className="w-full bg-bg-surface rounded-2xl p-4 text-left shadow-lg hover:bg-bg-elevated transition relative overflow-hidden min-h-[60px]"
+                      >
+                        <div className={`absolute left-0 top-0 bottom-0 w-1 ${config.color}`} />
+                        <div className="pl-3">
+                          <div className="font-semibold mb-2">{task.content}</div>
+                          <div className="flex items-center gap-2 flex-wrap">
+                            <span className="px-2.5 py-1 bg-bg-elevated rounded-lg text-xs font-medium text-text-secondary">
+                              {task.business}
+                            </span>
+                            {task.eta && (
+                              <span className="px-2.5 py-1 bg-accent-warning/10 rounded-lg text-xs font-medium text-accent-warning">
+                                {task.eta}
+                              </span>
+                            )}
+                          </div>
+                        </div>
+                      </button>
+                    ))
+                  )}
+                </div>
+              )}
+            </section>
+          );
+        })}
+      </main>
+
+      {/* Add Task Modal */}
       {showAddTask && (
-        <div className="fixed inset-0 bg-black/90 backdrop-blur flex items-center justify-center z-50 p-4">
-          <div className="bg-ytruck-gray border border-ytruck-gray-light rounded-2xl p-6 w-full max-w-md shadow-2xl">
-            <h3 className="text-2xl font-bold text-white mb-4">Create New Task</h3>
-            <textarea
-              value={newTaskContent}
-              onChange={(e) => setNewTaskContent(e.target.value)}
-              placeholder="What needs to be done?"
-              className="w-full px-4 py-3 bg-ytruck-dark border border-ytruck-gray-light rounded-xl text-white placeholder-gray-500 focus:outline-none focus:border-ytruck-coral mb-4 resize-none h-24"
-            />
-            <select
-              value={selectedBusiness}
-              onChange={(e) => setSelectedBusiness(e.target.value)}
-              className="w-full px-4 py-3 bg-ytruck-dark border border-ytruck-gray-light rounded-xl text-white focus:outline-none focus:border-ytruck-coral mb-3"
-            >
-              <option value="MyTruckManager">MyTruckManager</option>
-              <option value="615data">615data</option>
-              <option value="Ytruck">Ytruck.app</option>
-            </select>
-            <select
-              value={selectedColumn}
-              onChange={(e) => setSelectedColumn(e.target.value)}
-              className="w-full px-4 py-3 bg-ytruck-dark border border-ytruck-gray-light rounded-xl text-white focus:outline-none focus:border-ytruck-coral mb-4"
-            >
-              {Object.keys(data).map((col) => (
-                <option key={col} value={col}>{col}</option>
-              ))}
-            </select>
-            <div className="flex gap-3">
-              <button
-                onClick={handleAddTask}
-                className="flex-1 px-4 py-3 bg-ytruck-red hover:bg-ytruck-coral text-white font-bold rounded-xl transition"
+        <div className="fixed inset-0 bg-black/80 backdrop-blur z-50 flex items-end sm:items-center justify-center p-4">
+          <div className="bg-bg-surface rounded-3xl w-full max-w-md shadow-2xl">
+            <div className="p-6">
+              <h3 className="text-xl font-semibold mb-4">New Task</h3>
+              <textarea
+                value={newTask.content}
+                onChange={(e) => setNewTask({ ...newTask, content: e.target.value })}
+                placeholder="What needs to be done?"
+                className="w-full px-4 py-3 bg-bg-elevated rounded-xl text-text-primary placeholder-text-secondary focus:outline-none focus:ring-2 focus:ring-accent-primary mb-4 resize-none h-24"
+              />
+              <select
+                value={newTask.business}
+                onChange={(e) => setNewTask({ ...newTask, business: e.target.value })}
+                className="w-full px-4 py-3 bg-bg-elevated rounded-xl text-text-primary focus:outline-none focus:ring-2 focus:ring-accent-primary mb-4"
               >
-                Create
-              </button>
-              <button
-                onClick={() => setShowAddTask(false)}
-                className="flex-1 px-4 py-3 bg-ytruck-dark hover:bg-ytruck-darker text-white font-semibold rounded-xl transition border border-ytruck-gray-light"
-              >
-                Cancel
-              </button>
+                {businesses.map((b) => (
+                  <option key={b} value={b}>
+                    {b}
+                  </option>
+                ))}
+              </select>
+              <div className="flex gap-3">
+                <button
+                  onClick={addTask}
+                  className="flex-1 px-4 py-3 bg-accent-primary text-white font-semibold rounded-xl hover:bg-accent-primary/90 transition min-h-[48px]"
+                >
+                  Create
+                </button>
+                <button
+                  onClick={() => setShowAddTask(false)}
+                  className="flex-1 px-4 py-3 bg-bg-elevated text-text-primary font-semibold rounded-xl hover:bg-bg-elevated/80 transition min-h-[48px]"
+                >
+                  Cancel
+                </button>
+              </div>
             </div>
           </div>
         </div>
       )}
 
-      <div className="container mx-auto px-4 lg:px-6 py-6 lg:py-8">
-        <DndContext
-          sensors={sensors}
-          collisionDetection={closestCorners}
-          onDragStart={handleDragStart}
-          onDragOver={handleDragOver}
-          onDragEnd={handleDragEnd}
-        >
-          <div className={`${viewMode === 'grid' ? 'lg:overflow-x-auto' : ''} pb-4`}>
-            <div className={`flex ${viewMode === 'grid' ? 'flex-col lg:flex-row' : 'flex-col'} gap-6 ${viewMode === 'grid' ? 'lg:min-w-max' : ''}`}>
-              {Object.keys(data).map((columnId) => (
-                <Column
-                  key={columnId}
-                  id={columnId}
-                  title={columnId}
-                  tasks={data[columnId]}
-                  icon={columnConfig[columnId as keyof typeof columnConfig].icon}
-                  color={columnConfig[columnId as keyof typeof columnConfig].color}
-                  onDeleteTask={handleDeleteTask}
-                />
-              ))}
+      {/* Task Detail Modal */}
+      {selectedTask && (
+        <div className="fixed inset-0 bg-black/80 backdrop-blur z-50 flex items-end sm:items-center justify-center p-4">
+          <div className="bg-bg-surface rounded-3xl w-full max-w-md shadow-2xl">
+            <div className="p-6">
+              <h3 className="text-xl font-semibold mb-2">{selectedTask.content}</h3>
+              <div className="flex items-center gap-2 mb-6">
+                <span className="px-3 py-1.5 bg-bg-elevated rounded-lg text-sm font-medium text-text-secondary">
+                  {selectedTask.business}
+                </span>
+                <span className={`px-3 py-1.5 rounded-lg text-sm font-medium ${statusConfig[selectedTask.status].textColor} ${statusConfig[selectedTask.status].color}/10`}>
+                  {statusConfig[selectedTask.status].label}
+                </span>
+              </div>
+
+              <div className="space-y-2 mb-4">
+                <p className="text-sm text-text-secondary mb-2">Move to:</p>
+                {(['backlog', 'in-progress', 'done'] as const)
+                  .filter((s) => s !== selectedTask.status)
+                  .map((status) => (
+                    <button
+                      key={status}
+                      onClick={() => updateTaskStatus(selectedTask.id, status)}
+                      className="w-full px-4 py-3 bg-bg-elevated text-text-primary font-medium rounded-xl hover:bg-bg-elevated/80 transition text-left min-h-[48px]"
+                    >
+                      {statusConfig[status].label}
+                    </button>
+                  ))}
+              </div>
+
+              <div className="flex gap-3">
+                <button
+                  onClick={() => deleteTask(selectedTask.id)}
+                  className="flex-1 px-4 py-3 bg-red-500/10 text-red-400 font-semibold rounded-xl hover:bg-red-500/20 transition min-h-[48px]"
+                >
+                  Delete
+                </button>
+                <button
+                  onClick={() => setSelectedTask(null)}
+                  className="flex-1 px-4 py-3 bg-bg-elevated text-text-primary font-semibold rounded-xl hover:bg-bg-elevated/80 transition min-h-[48px]"
+                >
+                  Close
+                </button>
+              </div>
             </div>
           </div>
+        </div>
+      )}
 
-          <DragOverlay>
-            {activeTask ? (
-              <div className="rounded-xl bg-ytruck-gray border border-ytruck-coral p-4 shadow-2xl rotate-6">
-                <div className="font-medium text-white">{activeTask.content}</div>
-              </div>
-            ) : null}
-          </DragOverlay>
-        </DndContext>
-      </div>
+      <style jsx global>{`
+        .hide-scrollbar::-webkit-scrollbar {
+          display: none;
+        }
+        .hide-scrollbar {
+          -ms-overflow-style: none;
+          scrollbar-width: none;
+        }
+      `}</style>
     </div>
   );
 }
