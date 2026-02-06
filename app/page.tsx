@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { Terminal, Settings, LogOut, Plus } from 'lucide-react';
+import { Settings } from 'lucide-react';
 import { BottomNav, TabKey } from '@/components/navigation/BottomNav';
 import { KanbanBoard } from '@/components/kanban/KanbanBoard';
 import { AttentionInbox } from '@/components/kanban/AttentionInbox';
@@ -9,17 +9,18 @@ import { TaskDetailSheet } from '@/components/kanban/TaskDetailSheet';
 import { CreateTaskSheet } from '@/components/kanban/CreateTaskSheet';
 import { PromptView } from '@/components/PromptView';
 import { Button } from '@/components/ui/button';
-import { Task, TaskStatus, BusinessType } from '@/lib/types';
+import { Task, TaskStatus } from '@/lib/types';
 import { cn } from '@/lib/utils';
 
 type CommandSubView = 'prompt' | 'board' | 'attention' | 'messages';
 
 export default function Index() {
   const [tasks, setTasks] = useState<Task[]>([
-    { id: '1', title: 'Gmail Integration Setup', business: 'MyTruckManager', status: 'in_progress' },
+    { id: '1', title: 'Gmail Integration Setup', business: 'MyTruckManager', status: 'active' },
     { id: '2', title: 'Review Notion Database', business: '615Data', status: 'backlog' },
-    { id: '3', title: 'Follow up: Fleet Manager', business: 'YTruck', status: 'in_progress', needsAttention: true },
-    { id: '4', title: 'Demo Request', business: '615Data', status: 'backlog', needsAttention: true },
+    { id: '3', title: 'Follow up: Fleet Manager', business: 'YTruck', status: 'waiting', needsAttention: true },
+    { id: '4', title: 'Demo Request', business: '615Data', status: 'approval', needsAttention: true },
+    { id: '5', title: 'Setup completed', business: 'MyTruckManager', status: 'done' },
   ]);
 
   const [selectedBusiness, setSelectedBusiness] = useState('General');
@@ -43,9 +44,11 @@ export default function Index() {
     localStorage.setItem('acc-tasks', JSON.stringify(tasks));
   }, [tasks]);
 
-  const tasksByStatus = {
+  const tasksByStatus: Record<TaskStatus, Task[]> = {
     backlog: tasks.filter((t) => t.status === 'backlog'),
-    in_progress: tasks.filter((t) => t.status === 'in_progress'),
+    active: tasks.filter((t) => t.status === 'active'),
+    waiting: tasks.filter((t) => t.status === 'waiting'),
+    approval: tasks.filter((t) => t.status === 'approval'),
     done: tasks.filter((t) => t.status === 'done'),
   };
 

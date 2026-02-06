@@ -1,5 +1,5 @@
 export type BusinessType = 'MyTruckManager' | '615Data' | 'YTruck' | 'General';
-export type TaskStatus = 'backlog' | 'in_progress' | 'done';
+export type TaskStatus = 'backlog' | 'active' | 'waiting' | 'approval' | 'done';
 
 export interface Task {
   id: string;

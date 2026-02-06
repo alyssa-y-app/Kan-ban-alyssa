@@ -17,7 +17,9 @@ export function TaskDetailSheet({ task, open, onOpenChange, onUpdate, onDelete }
 
   const statuses: { key: TaskStatus; label: string }[] = [
     { key: 'backlog', label: 'Backlog' },
-    { key: 'in_progress', label: 'In Progress' },
+    { key: 'active', label: 'Active' },
+    { key: 'waiting', label: 'Waiting' },
+    { key: 'approval', label: 'Approval' },
     { key: 'done', label: 'Done' },
   ];
 
