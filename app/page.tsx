@@ -8,6 +8,7 @@ import { AttentionInbox } from '@/components/kanban/AttentionInbox';
 import { TaskDetailSheet } from '@/components/kanban/TaskDetailSheet';
 import { CreateTaskSheet } from '@/components/kanban/CreateTaskSheet';
 import { PromptView } from '@/components/PromptView';
+import { LeadsView } from '@/components/LeadsView';
 import { Button } from '@/components/ui/button';
 import { Task, TaskStatus } from '@/lib/types';
 import { cn } from '@/lib/utils';
@@ -155,8 +156,8 @@ export default function Index() {
               </div>
             )}
             {commandSubView === 'messages' && (
-              <div className="h-full overflow-y-auto flex items-center justify-center">
-                <p className="text-muted-foreground">Messages coming soon</p>
+              <div className="h-full">
+                <LeadsView />
               </div>
             )}
           </>
