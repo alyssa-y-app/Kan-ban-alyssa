@@ -10,6 +10,7 @@ import { CreateTaskSheet } from '@/components/kanban/CreateTaskSheet';
 import { PromptView } from '@/components/PromptView';
 import { LeadsView } from '@/components/LeadsView';
 import { KnowledgeView } from '@/components/KnowledgeView';
+import { RecurringTasksView } from '@/components/RecurringTasksView';
 import { Button } from '@/components/ui/button';
 import { Task, TaskStatus } from '@/lib/types';
 import { cn } from '@/lib/utils';
@@ -181,12 +182,8 @@ export default function Index() {
         )}
 
         {activeTab === 'tasks' && (
-          <div className="h-full overflow-y-auto flex items-center justify-center px-4">
-            <div className="text-center">
-              <div className="text-6xl mb-4">✓</div>
-              <h2 className="text-xl font-bold mb-2">Recurring Tasks</h2>
-              <p className="text-muted-foreground">Coming soon</p>
-            </div>
+          <div className="h-full">
+            <RecurringTasksView />
           </div>
         )}
       </main>
